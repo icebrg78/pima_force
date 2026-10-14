@@ -1,8 +1,7 @@
 {
-    "name": "Pima Force",
-    "filename": "pima_force.zip",
+    "name": "Pima Force (icepro)",
     "hide_default_branch": true,
     "homeassistant": "2026.10.0",
     "render_readme": true,
-    "zip_release": true
+    "zip_release": false
 }

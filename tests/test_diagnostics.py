@@ -59,6 +59,12 @@ async def test_diagnostics_loaded(
         "listening": True,
         "last_message": coordinator.last_message.isoformat(),
         "zone_states": {"1": True},
+        "system": {
+            "state": None,
+            "armed_mode": None,
+            "last_event": None,
+            "outputs": {},
+        },
     }
 
 
@@ -80,6 +86,12 @@ async def test_diagnostics_port_in_use(
         "listening": False,
         "last_message": None,
         "zone_states": {},
+        "system": {
+            "state": None,
+            "armed_mode": None,
+            "last_event": None,
+            "outputs": {},
+        },
     }
 
 

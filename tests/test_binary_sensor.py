@@ -58,7 +58,7 @@ async def _setup_entities(
     return [
         entry
         for entry in registry.entities.values()
-        if entry.config_entry_id == entry_id
+        if entry.config_entry_id == entry_id and entry.domain == "binary_sensor"
     ]
 
 
@@ -593,6 +593,7 @@ async def test_removed_zones_are_removed_from_registry(hass: HomeAssistant) -> N
     assert [
         entry.unique_id
         for entry in er.async_entries_for_config_entry(registry, entry_id)
+        if entry.domain == "binary_sensor"
     ] == [f"{entry_id}_1"]
     assert registry.async_get(other.entity_id) is not None
     state = hass.states.get(f"binary_sensor.{DOMAIN}_{DEFAULT_LISTENING_PORT}_zone1")

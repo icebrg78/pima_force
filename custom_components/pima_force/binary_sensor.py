@@ -8,7 +8,7 @@ import homeassistant.helpers.config_validation as cv
 import probatio
 from homeassistant.components import binary_sensor
 from homeassistant.components.binary_sensor.const import BinarySensorDeviceClass
-from homeassistant.const import CONF_NAME, CONF_PORT, STATE_ON
+from homeassistant.const import CONF_NAME, CONF_PORT, STATE_ON, Platform
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -63,7 +63,11 @@ async def async_setup_entry(
     for entity in er.async_entries_for_config_entry(
         entity_registry, config_entry.entry_id
     ):
-        if entity.unique_id not in unique_ids:
+        # icepro fork: the entry also owns the arm-panel and last-event entities.
+        if (
+            entity.domain == Platform.BINARY_SENSOR
+            and entity.unique_id not in unique_ids
+        ):
             entity_registry.async_remove(entity.entity_id)
 
     now = dt_util.now().isoformat()

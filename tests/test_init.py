@@ -167,7 +167,8 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
     assert config_entry.runtime_data.coordinator is coordinator
     coordinator.async_start.assert_awaited_once()
     hass.config_entries.async_forward_entry_setups.assert_awaited_once_with(
-        config_entry, (Platform.BINARY_SENSOR,)
+        config_entry,
+        (Platform.ALARM_CONTROL_PANEL, Platform.BINARY_SENSOR, Platform.SENSOR),
     )
 
 
@@ -260,6 +261,7 @@ async def test_async_unload_entry(hass: HomeAssistant, *, unloaded: bool) -> Non
 
     assert await async_unload_entry(hass, config_entry) is unloaded
     hass.config_entries.async_unload_platforms.assert_awaited_once_with(
-        config_entry, (Platform.BINARY_SENSOR,)
+        config_entry,
+        (Platform.ALARM_CONTROL_PANEL, Platform.BINARY_SENSOR, Platform.SENSOR),
     )
     assert coordinator.async_stop.await_count == int(unloaded)

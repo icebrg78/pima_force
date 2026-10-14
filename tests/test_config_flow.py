@@ -226,6 +226,7 @@ async def test_options_flow_port_change_renames_entities(
     assert sorted(
         entity.entity_id
         for entity in er.async_entries_for_config_entry(registry, config_entry.entry_id)
+        if entity.domain == "binary_sensor"
     ) == ["binary_sensor.back_door", "binary_sensor.pima_force_10002_zone3"]
     state = hass.states.get("binary_sensor.pima_force_10002_zone3")
     assert state is not None

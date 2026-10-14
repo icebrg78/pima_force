@@ -1,3 +1,11 @@
+> **icepro fork** of [amitfin/pima_force](https://github.com/amitfin/pima_force), branch `icepro`.
+> Adds, from the same SIA/ADM-CID connection (no extra port or panel setting):
+> - `alarm_control_panel.pima_force_<port>_panel` (read-only): `disarmed` / `armed_home` / `armed_away`,
+>   `pending` while an entry delay runs (CID 138), `triggered` on alarms (CID 1xx).
+>   Attributes: `armed_mode` (kept through pending/triggered), `user`, `partition`, `trigger_zone`, `trigger_code`.
+> - `sensor.pima_force_<port>_last_event`, e.g. `3441 01 015`, with the panel output states (CID 770) in `outputs`.
+> - Zone handling (CID 760) is unchanged. Install from HACS as a custom repository; releases are tagged `vX.Y.Z-icepro.N`.
+
 # Pima Force
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Default-31A9F4.svg?style=for-the-badge)](https://github.com/hacs/integration)

@@ -103,7 +103,9 @@ async def test_process_event_ignores_non_zone_event(hass: HomeAssistant) -> None
         )
 
     assert coordinator.zones == {}
-    coordinator.async_update_listeners.assert_not_called()
+    # icepro fork: the non-760 event is recorded as the last system event.
+    coordinator.async_update_listeners.assert_called_once()
+    assert coordinator.system.last_event_text == "1999  2"
 
 
 async def test_coordinator_start_stop_calls_client(

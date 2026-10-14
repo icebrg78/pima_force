@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
-PLATFORMS = (Platform.BINARY_SENSOR,)
+PLATFORMS = (Platform.ALARM_CONTROL_PANEL, Platform.BINARY_SENSOR, Platform.SENSOR)
 SERVICE_GET_ZONES_SCHEMA = probatio.Schema(
     {
         probatio.Required(ATTR_CONFIG_ENTRY_ID): selector.ConfigEntrySelector(

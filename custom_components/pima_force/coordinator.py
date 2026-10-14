@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from homeassistant.components.alarm_control_panel.const import AlarmControlPanelState
 from homeassistant.const import CONF_PORT
 from homeassistant.core import CALLBACK_TYPE, callback
 from homeassistant.helpers import issue_registry as ir
@@ -15,13 +16,16 @@ from pysiaalarm.account import SIAAccount
 from pysiaalarm.aio.client import SIAClient
 
 from .const import (
+    ADM_CID_ENTRY_DELAY_CODE,
     ADM_CID_EVENT_QUALIFIER_CLOSE,
     ADM_CID_EVENT_QUALIFIER_OPEN,
     ADM_CID_PIMA_ZONE_STATUS_CODE,
     DOMAIN,
+    ENTRY_DELAY_TIMEOUT_SECONDS,
     LOGGER,
     SIA_PIMA_KEEP_CONNECTED_QUALIFIER,
 )
+from .system_events import PimaSystemState
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -50,6 +54,9 @@ class PimaForceDataUpdateCoordinator(DataUpdateCoordinator[None]):
         self._port: int = config_entry.options[CONF_PORT]
         self._issue_id = f"{ISSUE_NO_MESSAGES}_{config_entry.entry_id}"
         self._cancel_watchdog: CALLBACK_TYPE | None = None
+        # icepro fork: arm state from the same feed.
+        self.system = PimaSystemState()
+        self._cancel_entry_delay: CALLBACK_TYPE | None = None
         self._sia_client = SIAClient(  # type: ignore[abstract]
             "",
             self._port,
@@ -111,9 +118,11 @@ class PimaForceDataUpdateCoordinator(DataUpdateCoordinator[None]):
     @callback
     def _handle_event(self, event: SIAEvent) -> None:
         """Handle a parsed SIA ADM-CID event."""
+        if event.event_type != ADM_CID_PIMA_ZONE_STATUS_CODE:
+            self._handle_system_event(event)
+            return
         if (
-            event.event_type != ADM_CID_PIMA_ZONE_STATUS_CODE
-            or event.event_qualifier
+            event.event_qualifier
             not in (
                 ADM_CID_EVENT_QUALIFIER_OPEN,
                 ADM_CID_EVENT_QUALIFIER_CLOSE,
@@ -127,6 +136,35 @@ class PimaForceDataUpdateCoordinator(DataUpdateCoordinator[None]):
             event.event_qualifier == ADM_CID_EVENT_QUALIFIER_OPEN
         )
         self.async_update_listeners()
+
+    @callback
+    def _handle_system_event(self, event: SIAEvent) -> None:
+        """Icepro fork: feed arm/disarm/alarm/output events to the arm state."""
+        if not event.event_type or not self.system.handle(event):
+            return
+        self._async_cancel_entry_delay()
+        if (
+            event.event_type == ADM_CID_ENTRY_DELAY_CODE
+            and self.system.state == AlarmControlPanelState.PENDING
+        ):
+            self._cancel_entry_delay = async_call_later(
+                self.hass, ENTRY_DELAY_TIMEOUT_SECONDS, self._async_entry_delay_expired
+            )
+        self.async_update_listeners()
+
+    @callback
+    def _async_cancel_entry_delay(self) -> None:
+        """Cancel the entry-delay fallback timer."""
+        if self._cancel_entry_delay is not None:
+            self._cancel_entry_delay()
+            self._cancel_entry_delay = None
+
+    @callback
+    def _async_entry_delay_expired(self, _: datetime) -> None:
+        """Return to the armed mode if no disarm or alarm followed the delay."""
+        self._cancel_entry_delay = None
+        if self.system.end_pending():
+            self.async_update_listeners()
 
     @property
     def last_message(self) -> datetime | None:
@@ -151,3 +189,4 @@ class PimaForceDataUpdateCoordinator(DataUpdateCoordinator[None]):
             server.close_clients()
         await self._sia_client.async_stop()
         self._async_cancel_watchdog()
+        self._async_cancel_entry_delay()

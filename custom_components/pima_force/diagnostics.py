@@ -23,4 +23,11 @@ async def async_get_config_entry_diagnostics(
             else None
         )
         data["zone_states"] = runtime_data.coordinator.zones
+        system = runtime_data.coordinator.system
+        data["system"] = {
+            "state": system.state,
+            "armed_mode": system.armed_mode,
+            "last_event": system.last_event_text,
+            "outputs": system.outputs,
+        }
     return data
